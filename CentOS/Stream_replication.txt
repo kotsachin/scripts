@@ -1,0 +1,81 @@
+./initdb -D /home/amul/pg_install/data/pg9.3D/
+
+./pg_ctl -D /home/amul/pg_install/data/pg9.3D/ start
+
+#		 echo "#" >> $PGDATAPATH/postgresql.conf;
+
+#		 echo "# Following settings (for master) to allow streaming replication business" >> $PGDATAPATH/postgresql.conf;
+
+#		 echo "wal_level = hot_standby" >> $PGDATAPATH/postgresql.conf;
+
+#		 echo "max_wal_senders = 3" >> $PGDATAPATH/postgresql.conf;
+#		 echo "wal_keep_segments = 3" >> $PGDATAPATH/postgresql.conf;
+		 
+
+#		 echo "local   replication     amit                                trust" >> $PGDATAPATH/pg_hba.conf;
+
+
+./pg_ctl -D /home/amul/pg_install/data/pg9.3D/ restart
+
+./pg_basebackup -x -D /home/amul/pg_install/data/pgsby9.3D
+
+
+
+echo "#" >> $PGSBYDATAPATH/postgresql.conf;
+         
+echo "# Following settings (for standby) to allow streaming replication business" >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "hot_standby = on" >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "max_standby_archive_delay = -1"  >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "max_standby_streaming_delay = -1" >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "wal_receiver_status_interval = 10s" >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "hot_standby_feedback = on" >>$PGSBYDATAPATH/postgresql.conf;
+
+		 
+echo "# Better change port for the standby" >>$PGSBYDATAPATH/postgresql.conf;
+		 
+echo "port = 5433" >>$PGSBYDATAPATH/postgresql.conf;
+
+	
+
+	 
+echo "standby_mode = on"  >>$PGSBYDATAPATH/recovery.conf;
+		 
+echo "primary_conninfo = 'port=5432'"  >>$PGSBYDATAPATH/recovery.conf;
+
+
+./pg_ctl -D /home/amul/pg_install/data/pgsby9.2D/ start
+
+
+
+
+CREATE OR REPLACE FUNCTION gisttestfunc() RETURNS int AS
+$$
+declare
+   i int4;
+   t text;
+   cur CURSOR FOR SELECT 'foo' FROM gisttest WHERE id >= 0;
+begin
+   set enable_seqscan=off; set enable_bitmapscan=off;
+
+   i = 0;
+   OPEN cur;
+   FETCH cur INTO t;
+
+   perform pg_sleep(10);
+
+   LOOP
+     EXIT WHEN NOT FOUND; -- this is bogus on first iteration
+	i = i + 1;
+     FETCH cur INTO t;
+   END LOOP;
+   CLOSE cur;
+   RETURN i;
+END;
+$$ LANGUAGE plpgsql;
+
+

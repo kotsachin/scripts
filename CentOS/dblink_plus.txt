@@ -1,0 +1,215 @@
+postgresql rpms url:
+http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/repoview/
+
+http://docs.oracle.com/cd/E24628_01/doc.121/e24473/emctl.htm
+
+http://sourceforge.net/projects/interdbconnect/files/dblink_plus/1.0.1/dblink_plus-1.0.1-1.pg93.rhel6.x86_64.rpm/download
+
+
+
+
+Install and configure dblink plus for remote Oracle server
+1. Download following rpms.
+dblink_plus-1.0.1-1.pg92.rhel6.x86_64.rpm 
+oracle-instantclient11.2-basic-11.2.0.3.0-1.x86_64.rpm
+
+2. Install rpms as under root user as follows:-
+# rpm -ivh dblink_plus-1.0.1-1.pg92.rhel6.x86_64.rpm 
+# rpm -ivh oracle-instantclient11.2-basic-11.2.0.3.0-1.x86_64.rpm
+oracle-instantclient12.1-basic-12.1.0.1.0-1.x86_64
+oracle-instantclient12.1-devel-12.1.0.1.0-1.x86_64
+
+
+3. Configure bash profile and library paths for postgres user:-
+$vim ~/.bash_profile
+--
+export ORACLE_HOME=/usr/lib/oracle/11.2/client64
+export LD_LIBRARY_PATH=/usr/lib/oracle/11.2/client64/lib:$LD_LIBRARY_PATH
+export TNS_ADMIN=$ORACLE_HOME/network/admin/
+
+
+
+----
+$source ~/.bash_profile
+
+su root
+#vim /etc/ld.so.conf
+-- 
+/usr/lib/oracle/11.2/client64/lib
+--
+# ldconfig
+exit
+
+
+4. Install dblink_plus into your database and create server for remote oracle :-
+$ psql -d bfn -U postgres -f /usr/pgsql-9.2/share/contrib/dblink_plus.sql
+
+
+$ psql -d postgres
+
+bfn=> CREATE FOREIGN DATA WRAPPER oracle VALIDATOR dblink.oracle;
+
+bfn=> CREATE SERVER IPDS_DB_LINK_WORK FOREIGN DATA WRAPPER oracle OPTIONS (dbname 'ORCL');
+bfn=> CREATE USER MAPPING FOR postgres SERVER IPDS_DB_LINK_WORK OPTIONS (user 'ipds', password 'ipds');
+
+
+bfn=> GRANT USAGE ON SCHEMA dblink TO postgres;
+bfn=> GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA dblink TO postgres;
+bfn=> GRANT DELETE ON ALL TABLES IN SCHEMA dblink TO postgres;
+bfn=> GRANT USAGE ON FOREIGN SERVER IPDS_DB_LINK_WORK TO postgres;
+
+
+5. Create user and temporary table on Oracle side:-
+# sqlplus sys as sysdba
+(Enter password which you have set for sys user at the time Oracle installation.)
+
+SQL> CREATE USER ipds IDENTIFIED by ipds;
+SQL> ALTER USER ipds default tablespace SYSTEM;
+SQL> GRANT CONNECT, CREATE session, CREATE table, CREATE view, CREATE procedure,CREATE synonym to ipds;
+SQL> ALTER USER ipds quota 100M on SYSTEM;
+SQL> quit
+
+# sqlplus ipds/ipds
+SQL> create table t1(id integer);
+
+Table created.
+
+SQL> insert into t1 values(1);
+
+1 row created.
+
+SQL> /
+
+1 row created.
+
+SQL> select * from t1;
+
+  ID
+----------
+
+   1
+   1
+
+SQL> 
+
+6. Create tns.ora file with following contents and execute dblink_plus sql:
+
+su root
+
+# mkdir -p /usr/lib/oracle/11.2/client64/network/admin/
+
+# vim /usr/lib/oracle/11.2/client64/network/admin/tnsnames.ora
+---
+XE =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 172.26.126.62)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = XE)
+    )
+  )
+----
+In this file (HOST = 172.26.126.62)(PORT = 1521) HOST is ip of your Oracle server and PORT is port number on which Oracle server is running.
+"XE" is the Oracle service name.(check tns.ora file on your Oracle server to know service name.)
+----
+
+
+===Restart postgresql then execute query.
+----
+$ psql -d bfn -U grmback
+
+bfn=> SELECT * FROM dblink.query ('ipds_db_link', 'select id from t1') as t1(c1 int);
+
+--------------
+
+ERROR:  could not establish connection
+DETAIL:  OCI_ERROR - ORA-24327: need explicit attach before authenticating a user
+
+check bash profile with correct oracle settings.
+source bash profile
+restart postgresql server
+execute query.
+
+==================================================================================================
+
+
+
+
+
+
+=============Regression tests======
+
+=======================Test with Oracle 11g and PostgreSQL9.4beta2-====
+
+[oracle@localhost dblink_plus-1.0.2]$ make MYSQL=0 SQLITE3=0 installcheck
+/home/oracle/pg_install/install/9.4beta2/lib/postgresql/pgxs/src/makefiles/../../src/test/regress/pg_regress --inputdir=./ --psqldir='/home/oracle/pg_install/install/9.4beta2/bin'    --dbname=contrib_regression init postgres oracle
+(using postmaster on Unix socket, port 6432)
+============== dropping database "contrib_regression" ==============
+DROP DATABASE
+============== creating database "contrib_regression" ==============
+CREATE DATABASE
+ALTER DATABASE
+============== running regression test queries        ==============
+test init                     ... ok
+test postgres                 ... ok
+test oracle                   ... ok
+
+=====================
+ All 3 tests passed. 
+=====================
+
+
+=======================Test with Only PostgreSQL-9.4beta2 ===
+
+[oracle@localhost dblink_plus-1.0.2]$ make MYSQL=0 SQLITE3=0 ORACLE=0 installcheck
+/home/oracle/pg_install/install/9.4beta2/lib/postgresql/pgxs/src/makefiles/../../src/test/regress/pg_regress --inputdir=./ --psqldir='/home/oracle/pg_install/install/9.4beta2/bin'    --dbname=contrib_regression init postgres
+(using postmaster on Unix socket, port 6432)
+============== dropping database "contrib_regression" ==============
+DROP DATABASE
+============== creating database "contrib_regression" ==============
+CREATE DATABASE
+ALTER DATABASE
+============== running regression test queries        ==============
+test init                     ... ok
+test postgres                 ... ok
+
+=====================
+ All 2 tests passed. 
+=====================
+
+
+====================Test with Standby Server (standbycheck) PostgreSQL9.4beta2====
+
+[oracle@localhost dblink_plus-1.0.2]$ make MYSQL=0 SQLITE3=0 ORACLE=0 PGPORT=15433 standbycheck
+/home/oracle/pg_install/install/9.4beta2/lib/postgresql/pgxs/src/makefiles/../../src/test/regress/pg_regress --inputdir=./ --psqldir='/home/oracle/pg_install/install/9.4beta2/bin'    --schedule=standby_schedule --use-existing --dbname=contrib_regression --port=15433
+(using postmaster on Unix socket, port 15433)
+============== running regression test queries        ==============
+test standby_postgres         ... ok
+
+=====================
+ All 1 tests passed. 
+=====================
+
+
+======================Test with Oracle 12c and PostgreSQL9.4beta2===============
+
+[oracle@localhost dblink_plus-1.0.2]$ make SQLITE3=0 MYSQL=0 installcheck
+/home/oracle/pg_install/install/9.4beta2/lib/postgresql/pgxs/src/makefiles/../../src/test/regress/pg_regress --inputdir=./ --psqldir='/home/oracle/pg_install/install/9.4beta2/bin'    --dbname=contrib_regression init postgres oracle
+(using postmaster on Unix socket, default port)
+============== dropping database "contrib_regression" ==============
+DROP DATABASE
+============== creating database "contrib_regression" ==============
+CREATE DATABASE
+ALTER DATABASE
+============== running regression test queries        ==============
+test init                     ... ok
+test postgres                 ... ok
+test oracle                   ... ok
+
+=====================
+ All 3 tests passed. 
+=====================
+
+
+
+

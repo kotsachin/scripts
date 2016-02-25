@@ -1,0 +1,13 @@
+[user]
+	name = amit
+	email = amitlangote09@gmail.com
+[http]
+	sslVerify = false
+	postBuffer = 524288000
+[color]
+	ui = true
+[core]
+	askpass = git-gui--askpass
+	pager = less -x4
+[push]
+	default = matching

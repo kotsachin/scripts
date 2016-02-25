@@ -1,0 +1,91 @@
+SELECT RTRIM(RTRIM(CATALOG_CODE,'' ''),'' '') AS CATALOG_CODE, CATALOG_NAME, KAI_CODE, PROMOTION_TYPE, CONTINUATION_FLAG, LEAFLET_TYPE, PAGES_TYPE, PAGES, TO_CHAR(ORDER_START_DATE, ''YYYYMMDD'') AS ORDER_START_DATE,TO_CHAR(ORDER_END_DATE,''YYYYMMDD'') AS ORDER_END_DATE, RECORD_FLAG, DELETED, EXPIRED_CATALOG FROM D_CATALOG WHERE RECORD_FLAG <> 0 ORDER BY CATALOG_CODE;
+
+
+
+CREATE OR REPLACE PACKAGE dblink AS TYPE RT1 IS RECORD (ret NUMBER);
+TYPE RCT1 IS REF CURSOR RETURN RT1;
+PROCEDURE f_test (RC IN OUT RCT1, num IN NUMBER);
+END;
+
+CREATE OR REPLACE PACKAGE BODY dblink AS PROCEDURE f_test (RC IN OUT RCT1, num IN NUMBER) AS BEGIN OPEN RC FOR select c1 + num from test_tbl;
+END f_test;
+END;
+
+
+
+select * from temp t where exists  (SELECT * FROM dblink.query ('ipds_db_link', 'select id from t1') as t1(c1 int) where t.id > c1);
+
+SELECT * FROM dblink.exec('ipds_db_link', 'begin insert into t1 values(1); insert into t1 values(2); insert into t1 values(3); insert into t1 values(4); end;');
+
+
+Å` 
+
+
+username/password@[//]host[:port][/service_name]
+
+CONNECT system/mypassword@mydbserver.mydomain.com
+Example 2 This example initiates a remote connection from Oracle Database XE Client, using a nondefault port number (1522):
+
+CONNECT system/mypassword@mydbserver.mydomain.com:1522
+Example 3 This example initiates a remote connection using the default port number, and includes the optional service name.
+
+CONNECT system/mypassword@mydbserver.mydomain.com/XE
+
+
+SQLPLUS HR@connect_identifier
+SQLPLUS HR/HR@connect_identifier
+
+sqlplus username/password@hostA:1521 /XE
+
+
+CONNECT HR@connect_identifier
+CONNECT HR/HR@connect_identifier
+
+
+http://www.dummies.com/how-to/content/how-to-connect-to-the-oracle-12c-database-instance.html
+How to set up tnsnames.ora with Oracle 12c
+You must provide the address or location of the database youÅfre trying to connect to. This information is often stored in the tnsnames.ora text file, which exists on the client youÅfre connecting from.
+
+Note this ÅgclientÅh can be a userÅfs workstation, a web application server, or even another database server.
+
+Here is a sample tnsnames.ora file that can be found in ORACLE_HOME_DIRECTORY/network/admin:
+
+dev12c =
+ (DESCRIPTION =
+  (ADDRESS_LIST =
+   (ADDRESS = (PROTOCOL = TCP)(HOST = orasvr01)(PORT = 1521))
+  )
+  (CONNECT_DATA =
+   (SERVICE_NAME = dev12c)
+  )
+db01 =
+ (DESCRIPTION =
+  (ADDRESS_LIST =
+   (ADDRESS = (PROTOCOL = TCP)(HOST = orasvr02)(PORT = 1521))
+  )
+  (CONNECT_DATA =
+   (SERVICE_NAME = db01)
+  )
+
+
+
+
+ORACLE_SID=XE;export ORACLE_SID
+ORACLE_HOME=/usr/lib/oracle/xe/app/oracle/product/10.2.0/server;export ORACLE_HOME
+PATH=$ORACLE_HOME/bin:$PATH;export PATH
+NLS_LANG=AMERICAN_AMERICA.AL32UTF8;export NLS_LANG
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH;export LD_LIBRARY_PATH
+
+
+
+
+
+
+
+
+
+limitations of dblink;
+1. need escape character for '' quote.
+2. pass dynamic values from local table to remote oracle table.
+3. Implicit typecast oracle datatypes into postgres and dispaly result
+4. 

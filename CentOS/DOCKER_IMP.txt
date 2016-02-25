@@ -1,0 +1,24 @@
+
+
+docker rm `docker ps -aq --no-trunc --filter "status=exited"`
+
+docker rmi `docker images --filter 'dangling=true' -q --no-trunc`
+
+
+
+Delete all containers
+
+docker rm $(docker ps -a -q)
+
+Delete all images
+
+docker rmi $(docker images -q)
+
+
+
+autovacuum_vacuum_cost_limit = -1
+log_min_duration_statement = -1
+log_error_verbosity = default
+log_checkpoints = off
+#log_lock_waits = off
+#log_autovacuum_min_duration = -1

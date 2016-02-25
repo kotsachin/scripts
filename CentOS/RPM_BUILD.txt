@@ -1,0 +1,38 @@
+
+yum groupinstall 'Development Tools'
+
+mkdir ~/rpm ~/rpm/BUILD ~/rpm/BUILDROOT ~/rpm/RPMS ~/rpm/RPMS/i386 ~/rpm/RPMS/i686 ~/rpm/RPMS/noarch ~/rpm/RPMS/x86_64 ~/rpm/SOURCES ~/rpm/SPECS ~/rpm/SRPMS 
+
+
+
+rpmbuild -ba --define="dist .pg93.rhel6" SPECS/dblink_plus_pg93.spec
+
+rpmbuild -ba --define="dist .pg93.ora12.1.rhel6" SPECS/dblink_plus_pg93.spec
+
+
+
+
+
+
+postgres=# create extension dblink_plus ;
+
+postgres=# CREATE FOREIGN DATA WRAPPER oracle VALIDATOR dblink.oracle;
+
+postgres=# CREATE SERVER ora_server FOREIGN DATA WRAPPER oracle OPTIONS (dbname 'ORCL');
+
+postgres=# CREATE USER MAPPING FOR amul SERVER ora_server OPTIONS (user 'ipds', password 'ipds');
+
+postgres=# SELECT * FROM dblink.query ('ora_server', 'select id from t1') as t1(c1 int);
+ERROR:  foreign data wrapper 'oracle' is not a connector
+
+
+
+
+postgres=# CREATE FOREIGN DATA WRAPPER postgres VALIDATOR dblink.postgres;
+
+postgres=# CREATE SERVER pg_server FOREIGN DATA WRAPPER postgres OPTIONS (host '192.168.56.102', port '5432', dbname 'postgres');
+
+postgres=# CREATE USER MAPPING FOR postgres SERVER pg_server OPTIONS (user 'postgres', password 'root123');
+
+postgres=# SELECT * FROM dblink.query ('pg_server', 'select id from t1') as t1(c1 int);
+

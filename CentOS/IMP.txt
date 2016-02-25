@@ -1,0 +1,61 @@
+http://www.sbijapan.com/
+http://www.boijapan.com/english/home_jp.aspx
+https://www.citibank.co.jp/en/banking/index.html
+
+GIT hacking----
+http://wildlyinaccurate.com/a-hackers-guide-to-git
+
+
+http://www.postgresql.org/message-id/531873E8.6050802@vmware.com
+
+
+
+imp links:look at it later
+
+http://wiki.postgresql.org/wiki/Reviewing_a_Patch
+https://commitfest.postgresql.org/action/commitfest_view/open
+http://wiki.postgresql.org/wiki/Developer_and_Contributor_Resources
+http://wiki.postgresql.org/wiki/Developer_FAQ
+http://wiki.postgresql.org/wiki/Committing_with_Git
+https://wiki.postgresql.org/wiki/Working_with_Git
+
+
+to goto perticular postgresql version with git:
+
+
+git checkout tag_name  (git tag)
+
+
+to apply patch by git:
+
+git checkout patch_commit_number
+diff -Naur pg_reorg-1.1.10/bin/pg_reorg.c pg_reorg-1.1.10_original/bin/pg_reorg.c >/mnt/vbox_share/wait_on_other_database.patch
+
+to apply patch to normal source:
+
+go to source parent directory then
+patch -p0 < postgresql-X.Y.Z-X.Y.Z+1.patch
+
+to remove applied patch:
+patch -R < postgresql-X.Y.Z-X.Y.Z+1.patch
+
+
+
+URL to share windows folder into centos:
+Add folder in virtualbox GUI and then
+su
+mkdir /mnt/vbox_share/
+mount.vboxsf CentOS /mnt/vbox_share/
+
+
+http://my-wd-local.wikidot.com/otherapp:configure-virtualbox-shared-folders-in-a-windows-ho
+
+VirtualBox=Windows filder name
+
+
+Attaching gdb to postgresql:
+
+
+http://posulliv.github.io/2009/05/03/attaching-gdb-to-postgresql/
+http://shignpost.blogspot.jp/2013/05/postgresql-gdb-debug.html
+http://blog.163.com/digoal@126/blog/static/163877040201252605924116/
